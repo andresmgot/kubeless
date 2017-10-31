@@ -131,5 +131,5 @@ metadata:
   namespace: kubeless
 data:
   maxFileSize: 50Mi
-  maxFuncHistory: 10
+  maxFuncHistory: "10"
 kind: ConfigMap
