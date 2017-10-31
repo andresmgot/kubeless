@@ -130,4 +130,13 @@ load ../script/libtest
   wait_for_endpoint webserver
   verify_update_function webserver
 }
+@test "Test function stored in Minio" {
+  kubectl create secret generic minio-key --namespace kubeless --from-literal=accesskey=foobar --from-literal=secretkey=foobarfoo
+  deploy_manifest "$(pwd)/manifests/minio/minio.yaml"
+  k8s_wait_for_pod_ready -l kubeless=minio -n kubeless
+  test_kubeless_function get-python
+  kubectl describe pod -l function=get-python | grep "curl -L http://minio.kubeless:9000"
+  teardown_manifest "$(pwd)/manifests/minio/minio.yaml"
+  kubectl delete secret --namespace kubeless minio-key
+}
 # vim: ts=2 sw=2 si et syntax=sh

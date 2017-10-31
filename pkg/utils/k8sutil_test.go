@@ -637,6 +637,15 @@ func TestGetProvisionContainer(t *testing.T) {
 		t.Errorf("Unexpected result:\n %+v", c)
 	}
 
+	// If the content type is an URL it should download the file
+	c, err = getProvisionContainer("http://file.com/test.func", "sha256:abc1234", "test.func", "test.foo", "URL", "python2.7", rvol, dvol)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err)
+	}
+	if !strings.HasPrefix(c.Args[0], "curl -L http://file.com/test.func -o /deps/test.func") {
+		t.Errorf("Unexpected command: %s", c.Args[0])
+	}
+
 	// If the content type is encoded it should decode it
 	c, err = getProvisionContainer("Zm9vYmFyCg==", "sha256:abc1234", "test.func", "test.foo", "base64", "python2.7", rvol, dvol)
 	if err != nil {
