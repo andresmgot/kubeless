@@ -227,6 +227,15 @@ func TestGetFunctionDescription(t *testing.T) {
 			Name:      "minio",
 		},
 	}
+	minioConfig := v1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "minio-config",
+			Namespace: "kubeless",
+		},
+		Data: map[string]string{
+			"maxFileSize": "50Mi",
+		},
+	}
 	uploadFakeJob := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "kubeless",
@@ -239,6 +248,9 @@ func TestGetFunctionDescription(t *testing.T) {
 	cli := &fake.Clientset{}
 	cli.Fake.AddReactor("get", "services", func(action core.Action) (bool, runtime.Object, error) {
 		return true, &minioFakeSvc, nil
+	})
+	cli.Fake.AddReactor("get", "configmaps", func(action core.Action) (bool, runtime.Object, error) {
+		return true, &minioConfig, nil
 	})
 	cli.Fake.AddReactor("get", "jobs", func(action core.Action) (bool, runtime.Object, error) {
 		return true, &uploadFakeJob, nil

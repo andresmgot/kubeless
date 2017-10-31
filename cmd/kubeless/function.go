@@ -143,10 +143,12 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 		return "", "", "", err
 	}
 	rawChecksum, err := getFileSha256(file)
+	if err != nil {
+		return "", "", "", err
+	}
 	checksum = "sha256:" + rawChecksum
 
 	if isMinioAvailable(cli) {
-		var rawChecksum string
 		if err != nil {
 			return "", "", "", err
 		}
