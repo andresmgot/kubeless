@@ -146,10 +146,11 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 		err = errors.New("The maximum size of a function is 50MB")
 		return "", "", "", err
 	}
+	rawChecksum, err := getFileSha256(file)
+	checksum = "sha256:" + rawChecksum
 
 	if isMinioAvailable(cli) {
 		var rawChecksum string
-		rawChecksum, err := getFileSha256(file)
 		if err != nil {
 			return "", "", "", err
 		}
@@ -157,7 +158,6 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 		if err != nil {
 			return "", "", "", err
 		}
-		checksum = "sha256:" + rawChecksum
 		contentType = "URL"
 		if err != nil {
 			return "", "", "", err
@@ -184,8 +184,6 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 			function = base64.StdEncoding.EncodeToString(functionBytes)
 			contentType = "base64"
 		}
-		c, err := getFileSha256(file)
-		checksum = "sha256:" + c
 		if err != nil {
 			return "", "", "", err
 		}
