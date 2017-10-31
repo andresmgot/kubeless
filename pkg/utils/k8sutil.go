@@ -281,6 +281,10 @@ func getProvisionContainer(function, checksum, fileName, handler, contentType, r
 
 	// Prepare Function file and dependencies
 	switch contentType {
+	case "URL":
+		// Function is an URL, download it
+		prepareCommand = appendToCommand(prepareCommand, fmt.Sprintf("curl -L %s -o %s", function, originFile))
+		break
 	case "base64":
 		// File is encoded in base64
 		prepareCommand = appendToCommand(prepareCommand, fmt.Sprintf("cat %s | base64 -d > %s", originFile, originFile))
