@@ -6,6 +6,7 @@ import (
 	"path"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
@@ -31,10 +32,31 @@ func waitForCompletedJob(jobName, namespace string, timeout int, cli kubernetes.
 	return fmt.Errorf("Upload job has not finished after %s seconds", string(timeout))
 }
 
+func validateMaxSize(fileSize int64, cli kubernetes.Interface) error {
+	minioConfig, err := cli.CoreV1().ConfigMaps("kubeless").Get("minio-config", metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("Unable to find Minio configuration. Received: %s", err)
+	}
+	maxFileSize := minioConfig.Data["maxFileSize"]
+	maxSizeQuantity, err := resource.ParseQuantity(maxFileSize)
+	if err != nil {
+		return err
+	}
+	maxSize, _ := maxSizeQuantity.AsInt64()
+	if fileSize > maxSize {
+		return fmt.Errorf("The maximum size of a function is %s", maxFileSize)
+	}
+	return nil
+}
+
 // UploadFunction uploads a file to Minio using as object name file.extension
 // It uses a Kubernetes job to access Minio since we need to use an URL <domain>[:port] (a URL with
 // proxy is not valid)
-func UploadFunction(file, checksum string, cli kubernetes.Interface) (string, error) {
+func UploadFunction(file, checksum string, fileStats os.FileInfo, cli kubernetes.Interface) (string, error) {
+	err := validateMaxSize(fileStats.Size(), cli)
+	if err != nil {
+		return "", err
+	}
 	minioCredentials := "minio-key"
 	jobName := "upload-file-" + checksum[0:10]
 	fileName := path.Base(file) + "." + checksum
@@ -100,7 +122,7 @@ func UploadFunction(file, checksum string, cli kubernetes.Interface) (string, er
 			},
 		},
 	}
-	_, err := cli.BatchV1().Jobs("kubeless").Create(&job)
+	_, err = cli.BatchV1().Jobs("kubeless").Create(&job)
 	if err != nil {
 		return "", err
 	}

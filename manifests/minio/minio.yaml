@@ -124,3 +124,12 @@ spec:
           - name: keys
             mountPath: /minio-cred
       restartPolicy: OnFailure
+---
+apiVersion: v1
+metadata:
+  name: minio-config
+  namespace: kubeless
+data:
+  maxFileSize: 50Mi
+  maxFuncHistory: 10
+kind: ConfigMap
