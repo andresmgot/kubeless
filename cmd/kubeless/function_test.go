@@ -27,10 +27,8 @@ import (
 	"github.com/kubeless/kubeless/pkg/spec"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
-	batchv1 "k8s.io/client-go/pkg/apis/batch/v1"
-	core "k8s.io/client-go/testing"
+	"k8s.io/client-go/rest"
 )
 
 func TestParseLabel(t *testing.T) {
@@ -99,7 +97,7 @@ func TestGetFunctionDescription(t *testing.T) {
 	}
 	defer os.Remove(file.Name()) // clean up
 
-	result, err := getFunctionDescription("test", "default", "file.handler", file.Name(), "dependencies", "runtime", "", "", "test-image", "128Mi", true, []string{"TEST=1"}, []string{"test=1"}, spec.Function{}, fake.NewSimpleClientset())
+	result, err := getFunctionDescription("test", "default", "file.handler", file.Name(), "dependencies", "runtime", "", "", "test-image", "128Mi", true, []string{"TEST=1"}, []string{"test=1"}, spec.Function{}, fake.NewSimpleClientset(), rest.RESTClient{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -155,7 +153,7 @@ func TestGetFunctionDescription(t *testing.T) {
 	}
 
 	// It should take the default values
-	result2, err := getFunctionDescription("test", "default", "", "", "", "", "", "", "", "", false, []string{}, []string{}, expectedFunction, fake.NewSimpleClientset())
+	result2, err := getFunctionDescription("test", "default", "", "", "", "", "", "", "", "", false, []string{}, []string{}, expectedFunction, fake.NewSimpleClientset(), rest.RESTClient{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -165,7 +163,7 @@ func TestGetFunctionDescription(t *testing.T) {
 
 	// Given parameters should take precedence from default values
 	file.WriteString("-modified") // Add text to the file
-	result3, err := getFunctionDescription("test", "default", "file.handler2", file.Name(), "dependencies2", "runtime2", "test_topic", "", "test-image2", "256Mi", false, []string{"TEST=2"}, []string{"test=2"}, expectedFunction, fake.NewSimpleClientset())
+	result3, err := getFunctionDescription("test", "default", "file.handler2", file.Name(), "dependencies2", "runtime2", "test_topic", "", "test-image2", "256Mi", false, []string{"TEST=2"}, []string{"test=2"}, expectedFunction, fake.NewSimpleClientset(), rest.RESTClient{})
 	if err != nil {
 		t.Error(err)
 	}
@@ -227,35 +225,8 @@ func TestGetFunctionDescription(t *testing.T) {
 			Name:      "minio",
 		},
 	}
-	minioConfig := v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "minio-config",
-			Namespace: "kubeless",
-		},
-		Data: map[string]string{
-			"maxFileSize": "50Mi",
-		},
-	}
-	uploadFakeJob := batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "kubeless",
-			Name:      "upload-file",
-		},
-		Status: batchv1.JobStatus{
-			Succeeded: 1,
-		},
-	}
-	cli := &fake.Clientset{}
-	cli.Fake.AddReactor("get", "services", func(action core.Action) (bool, runtime.Object, error) {
-		return true, &minioFakeSvc, nil
-	})
-	cli.Fake.AddReactor("get", "configmaps", func(action core.Action) (bool, runtime.Object, error) {
-		return true, &minioConfig, nil
-	})
-	cli.Fake.AddReactor("get", "jobs", func(action core.Action) (bool, runtime.Object, error) {
-		return true, &uploadFakeJob, nil
-	})
-	result4, err := getFunctionDescription("test", "default", "file.handler", file.Name(), "dependencies", "runtime", "", "", "test-image", "128Mi", true, []string{"TEST=1"}, []string{"test=1"}, spec.Function{}, cli)
+	cli := fake.NewSimpleClientset(&minioFakeSvc)
+	result4, err := getFunctionDescription("test", "default", "file.handler", file.Name(), "dependencies", "runtime", "", "", "test-image", "128Mi", true, []string{"TEST=1"}, []string{"test=1"}, spec.Function{}, cli, rest.RESTClient{})
 	if err != nil {
 		t.Error(err)
 	}
