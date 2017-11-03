@@ -4,21 +4,6 @@
 # execute:
 # $ kubectl create secret generic minio-key --namespace kubeless --from-literal=accesskey=<username> --from-literal=secretkey=<password>
 ---
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: minio
-  namespace: kubeless
-  annotations:
-    volume.alpha.kubernetes.io/storage-class: standard
-spec:
-  storageClassName: standard
-  accessModes:
-    - "ReadWriteOnce"
-  resources:
-    requests:
-      storage: "10Gi"
----
 kind: Service
 apiVersion: v1
 metadata:
@@ -34,17 +19,27 @@ spec:
       targetPort: 9000
       protocol: TCP
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
+apiVersion: apps/v1beta2
+kind: StatefulSet
 metadata:
   name: minio
   namespace: kubeless
   labels:
     kubeless: minio
 spec:
+  serviceName: minio
   selector:
     matchLabels:
       kubeless: minio
+  volumeClaimTemplates:
+  - metadata:
+      name: minio-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 10Gi
   template:
     metadata:
       name: minio
@@ -57,16 +52,19 @@ spec:
             "image": "busybox",
             "command": ["mkdir", "-p", "/export/functions"],
             "volumeMounts": [{
-              "name": "export",
+              "name": "minio-storage",
               "mountPath": "/export"
             }]
           }
         ]'
     spec:
-      volumes:
-        - name: export
-          persistentVolumeClaim:
-            claimName: minio
+      initContainers:
+        - name: init-myservice
+          image: busybox
+          command: ["mkdir", "-p", "/export/functions"]
+          volumeMounts:
+            - name: minio-storage
+              mountPath: "/export"
       containers:
         - name: minio
           image: minio/minio:RELEASE.2017-02-16T01-47-30Z
@@ -74,7 +72,7 @@ spec:
           command: ["minio"]
           args: ["server", "/export"]
           volumeMounts:
-            - name: export
+            - name: minio-storage
               mountPath: /export
           ports:
             - name: service
@@ -118,7 +116,8 @@ spec:
         image: minio/mc:RELEASE.2017-10-14T00-51-16Z
         command: ["sh", "-c"]
         args: [ "\
-          mc config host add minioserver http://minio.kubeless:9000 $(cat /minio-cred/accesskey) $(cat /minio-cred/secretkey) &&  \
+          env && \
+          mc config host add minioserver http://$MINIO_SERVICE_HOST:$MINIO_SERVICE_PORT $(cat /minio-cred/accesskey) $(cat /minio-cred/secretkey) &&  \
           mc policy download minioserver/functions" ]
         volumeMounts:
           - name: keys

@@ -96,7 +96,11 @@ var updateCmd = &cobra.Command{
 		}
 
 		cli := utils.GetClientOutOfCluster()
-		f, err := getFunctionDescription(funcName, ns, handler, file, "", runtime, topic, schedule, runtimeImage, mem, triggerHTTP, envs, labels, previousFunction, cli)
+		restCli, err := utils.GetRestClientOutOfCluster("", "v1", "/api")
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		f, err := getFunctionDescription(funcName, ns, handler, file, "", runtime, topic, schedule, runtimeImage, mem, triggerHTTP, envs, labels, previousFunction, cli, *restCli)
 		if err != nil {
 			logrus.Fatal(err)
 		}

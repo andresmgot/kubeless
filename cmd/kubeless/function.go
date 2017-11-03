@@ -20,15 +20,13 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
-	"github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/kubeless/kubeless/pkg/minio"
 	"github.com/kubeless/kubeless/pkg/spec"
@@ -37,6 +35,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/rest"
 )
 
 var functionCmd = &cobra.Command{
@@ -124,24 +123,11 @@ func isMinioAvailable(cli kubernetes.Interface) bool {
 	if err != nil {
 		return false
 	}
-	minioPods, err := cli.Core().Pods("kubeless").List(metav1.ListOptions{
-		LabelSelector: "kubeless=minio",
-	})
-	for i := range minioPods.Items {
-		if minioPods.Items[i].Status.Phase != "Running" {
-			logrus.Warn("Found unhealthy Minio pod, disabling upload")
-			return false
-		}
-	}
 	return true
 }
 
-func uploadFunction(file string, cli kubernetes.Interface) (string, string, string, error) {
+func uploadFunction(file, namespace string, cli kubernetes.Interface, restCli rest.RESTClient) (string, string, string, error) {
 	var function, contentType, checksum string
-	stats, err := os.Stat(file)
-	if err != nil {
-		return "", "", "", err
-	}
 	rawChecksum, err := getFileSha256(file)
 	if err != nil {
 		return "", "", "", err
@@ -152,7 +138,7 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 		if err != nil {
 			return "", "", "", err
 		}
-		function, err = minio.UploadFunction(file, rawChecksum, stats, cli)
+		function, err = minio.UploadFunction(file, rawChecksum, namespace, cli, restCli)
 		if err != nil {
 			return "", "", "", err
 		}
@@ -161,12 +147,6 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 			return "", "", "", err
 		}
 	} else {
-		// If an object storage service is not available check
-		// that the file is not over 1MB to store it as a Custom Resource
-		if stats.Size() > int64(1*1024*1024) {
-			err = errors.New("Unable to deploy functions over 1MB withouth a storage service")
-			return "", "", "", err
-		}
 		functionBytes, err := ioutil.ReadFile(file)
 		if err != nil {
 			return "", "", "", err
@@ -174,8 +154,7 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 		if err != nil {
 			return "", "", "", err
 		}
-		fileType := http.DetectContentType(functionBytes)
-		if strings.Contains(fileType, "text/plain") {
+		if utf8.Valid(functionBytes) {
 			function = string(functionBytes[:])
 			contentType = "text"
 		} else {
@@ -189,7 +168,7 @@ func uploadFunction(file string, cli kubernetes.Interface) (string, string, stri
 	return function, contentType, checksum, nil
 }
 
-func getFunctionDescription(funcName, ns, handler, file, deps, runtime, topic, schedule, runtimeImage, mem string, triggerHTTP bool, envs, labels []string, defaultFunction spec.Function, cli kubernetes.Interface) (*spec.Function, error) {
+func getFunctionDescription(funcName, ns, handler, file, deps, runtime, topic, schedule, runtimeImage, mem string, triggerHTTP bool, envs, labels []string, defaultFunction spec.Function, cli kubernetes.Interface, restCli rest.RESTClient) (*spec.Function, error) {
 
 	if handler == "" {
 		handler = defaultFunction.Spec.Handler
@@ -203,7 +182,7 @@ func getFunctionDescription(funcName, ns, handler, file, deps, runtime, topic, s
 		checksum = defaultFunction.Spec.Checksum
 	} else {
 		var err error
-		function, contentType, checksum, err = uploadFunction(file, cli)
+		function, contentType, checksum, err = uploadFunction(file, ns, cli, restCli)
 		if err != nil {
 			return &spec.Function{}, err
 		}

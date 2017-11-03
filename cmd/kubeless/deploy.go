@@ -108,7 +108,11 @@ var deployCmd = &cobra.Command{
 		}
 
 		cli := utils.GetClientOutOfCluster()
-		f, err := getFunctionDescription(funcName, ns, handler, file, funcDeps, runtime, topic, schedule, runtimeImage, mem, triggerHTTP, envs, labels, spec.Function{}, cli)
+		restCli, err := utils.GetRestClientOutOfCluster("", "v1", "/api")
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		f, err := getFunctionDescription(funcName, ns, handler, file, funcDeps, runtime, topic, schedule, runtimeImage, mem, triggerHTTP, envs, labels, spec.Function{}, cli, *restCli)
 		if err != nil {
 			logrus.Fatal(err)
 		}
