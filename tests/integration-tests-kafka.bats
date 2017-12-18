@@ -16,21 +16,6 @@
 
 load ../script/libtest
 
-@test "Verify TEST_CONTEXT envvar" {
-  : ${TEST_CONTEXT:?}
-}
-@test "Verify needed kubernetes tools installed" {
-  verify_k8s_tools
-}
-@test "Verify k8s RBAC mode" {
-  verify_rbac_mode
-}
-@test "Test simple function failure without RBAC rules" {
-  test_must_fail_without_rbac_roles
-}
-@test "Redeploy with proper RBAC rules" {
-  redeploy_with_rbac_roles
-}
 # 'bats' lacks loop support, unroll-them-all ->
 @test "Deploy functions to evaluate (kafka dependent)" {
   wait_for_kubeless_kafka_server_ready

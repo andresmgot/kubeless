@@ -68,15 +68,16 @@ script:
       make validation
       ;;
     minikube)
-      make integration-tests
+      ./script/integration-tests minikube deployment
+      ./script/integration-tests minikube basic
       ;;
     minikube_kafka)
       if [[ "$TRAVIS_PULL_REQUEST" != false ]]; then
         # CHANGE SLUG
         pr_kafka_title=$(curl -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/andresmgot/kubeless/pulls/${TRAVIS_PULL_REQUEST}" | grep -i kafka || true)
       fi
-      echo "Title $pr_kafka_title"
       if [[ "$TRAVIS_BRANCH" == master || "$pr_kafka_title" != "" ]]; then
+        ./script/integration-tests minikube deployment
         ./script/integration-tests minikube kafka
       else
         echo "Skipping Kafka tests"
@@ -96,7 +97,6 @@ script:
           bash -c 'grep -q "No resources found" <(timeout 60 kubectl get pods -n kubeless -w 2>&1)'
         fi
         ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${GKE_CLUSTER}
-        ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${GKE_CLUSTER} kafka
       else
         echo "Skipping GKE tests"
       fi

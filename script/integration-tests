@@ -66,11 +66,17 @@ k8s_context_save
 # Run the tests thru bats:
 kubectl create namespace kubeless
 case $INTEGRATION_TESTS_TARGET in
+deployment)
+    bats tests/deployment-tests.bats
+    ;;
+basic)
+    bats tests/integration-tests.bats
+    ;;
 kafka)
     bats tests/integration-tests-kafka.bats
     ;;
 *)
-    bats tests/integration-tests.bats
+    bats tests/deployment-tests.bats && bats tests/integration-tests.bats && bats tests/integration-tests-kafka.bats
     ;;
 esac
 exit_code=$?
