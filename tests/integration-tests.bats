@@ -108,51 +108,9 @@ load ../script/libtest
 @test "Test function: get-python-metadata" {
   verify_function get-python-metadata
 }
-@test "Deploy functions to evaluate (kafka dependent)" {
-  wait_for_kubeless_kafka_server_ready
-  deploy_function pubsub-python
-  deploy_function pubsub-python34
-  deploy_function pubsub-nodejs
-  deploy_function pubsub-ruby
-}
-@test "Test function: pubsub-python" {
-  verify_function pubsub-python
-}
-@test "Test function: pubsub-python34" {
-  verify_function pubsub-python34
-}
-@test "Test function update: pubsub-python" {
-  verify_function pubsub-python
-}
-@test "Test function: pubsub-nodejs" {
-  verify_function pubsub-nodejs
-}
-@test "Test function: pubsub-ruby" {
-  verify_function pubsub-ruby
-}
 @test "Test function: scheduled-get-python" {
   # Now we can verify the scheduled function
   # without having to wait
   verify_function scheduled-get-python
-}
-@test "Test topic list" {
-  wait_for_kubeless_kafka_server_ready
-  for topic in topic1 topic2; do
-    kubeless topic create $topic
-    _wait_for_kubeless_kafka_topic_ready $topic
-  done
-
-  kubeless topic list >$BATS_TMPDIR/kubeless-topic-list
-  grep -qxF topic1 $BATS_TMPDIR/kubeless-topic-list
-  grep -qxF topic2 $BATS_TMPDIR/kubeless-topic-list
-}
-@test "Test topic deletion" {
-  test_topic_deletion
-}
-@test "Verify Kafka after restart (if context=='minikube')" {
-    local topic=$RANDOM
-    kubeless topic create $topic
-    sts_restart
-    kubeless topic list | grep $topic
 }
 # vim: ts=2 sw=2 si et syntax=sh

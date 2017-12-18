@@ -20,7 +20,7 @@ KUBELESS_MANIFEST_RBAC=kubeless-rbac.yaml
 KUBECTL_BIN=$(which kubectl)
 : ${KUBECTL_BIN:?ERROR: missing binary: kubectl}
 
-export TEST_MAX_WAIT_SEC=360
+export TEST_MAX_WAIT_SEC=600
 
 # Workaround 'bats' lack of forced output support, dup() stderr fd
 exec 9>&2
@@ -75,6 +75,10 @@ k8s_wait_for_pod_logline() {
     local -i cnt=${TEST_MAX_WAIT_SEC:?}
     echo_info "Waiting for '${@}' to show logline '${string}' ..."
     until kubectl logs "${@}"|&grep -q "${string}"; do
+        echo_info "$(kubectl get all -n kubeless)"
+        echo_info "$(kubectl describe sts -n kubeless kafka)"
+        echo_info "$(kubectl describe pod -n kubeless kafka-0)"
+        echo_info "$(kubectl describe pvc -n kubeless)"
         ((cnt=cnt-1)) || return 1
         sleep 1
     done
@@ -240,6 +244,7 @@ redeploy_with_rbac_roles() {
     kubeless_recreate $KUBELESS_MANIFEST_RBAC $KUBELESS_MANIFEST_RBAC
     _wait_for_kubeless_controller_ready
     _wait_for_kubeless_controller_logline "controller synced and ready"
+    echo_info $(kubectl get pods -n kubeless)
 }
 
 deploy_function() {
