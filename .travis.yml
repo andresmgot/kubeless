@@ -33,11 +33,37 @@ env:
     - secure: TCpdHWBIFmNlaVwr1IjATxiE3HWljTM7KG76WNYLkU6PQOjvE69a9oEj20ar1TRDlJfFyr2acq2c+PMfX6ry8MypGplSFBR8cQlF1vlNjVVSld25efTslq1eoWMTiEBFUX9D80tcHyheO/W6E+/7pj9vJ03GLnlHJyYeP35pemCEPjusxH3sJXCxfpBcgAsLR/56yATravxF86zUY21y64IlvzMpCIdrmd+i7DoJD5G5+LxwL+bUJD0JB97tOM9QGJyBuLFKr/fh39GO6b6PDMo2d4tEYIWcXEkgJbrpLtzzEJJl6D1/znmMUKcpKp1ScQuDHPtKBzArfDqZ4xl5vbSsc5+GbC+RiJvym99/FMdOeEoqyfqvJMNZfTZDpepgFZr3mltJ617lXIwhhuffKynhayLaa6SIE9TWARNtHUSP2iBTX4Us48759T7BK/JyKtz6ld3k92JutIovXJHzjIcvnoR0zJZ0XowhKSRiQNZkqjJ+vvMuJ+sNyq1hWwsfryxRgeHVqpcKXZP+TJvEpaksA+wMbrWNMYptGMDNakqcSH6+xL7Pjq/xg/1Jl2Zv8siW8hvhOTGsTVCDYqbu04PC/M6lH8WkTtOjFvryvFypJE+KZjyZTDloGFBNYCyz18HH9ZmZwQGdMjLI/msI7KpvFXoQuUxkzxuTjpQtNz0=
 before_install:
   - set -e
-
-install:
-  - make bootstrap
+  # Decide if we should run the tests
   - |
-    if [[ "$TEST_TARGET" == "GKE" && -n "$GKE_ADMIN" && "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
+    # We will only build assets when doing unit tests or minikube end-2-end tests
+    if [[ "$TEST_TARGET" == "unit" || "$TEST_TARGET" == "minikube" ]]; then
+      export SHOULD_TEST=1
+    else
+      # In case of GKE we will only want to build if it is
+      # a build of a branch in the kubeless/kubeless repository
+      if [[ "$TEST_TARGET" == "GKE" && -n "$GKE_ADMIN" && "$TRAVIS_EVENT_TYPE" != "pull_request" ]];
+        export SHOULD_TEST=1
+        export SHOULD_INSTALL_GCLOUD=1
+      fi
+      # In kase of minikube+kafka we want to test it if
+      # it is a Pull Request related to Kafka (discovered from the PR title)
+      # or if the build is from the "master" branch
+      if [[ "$TEST_TARGET" == "minikube_kafka" ]]; then
+        if [[ "$TRAVIS_PULL_REQUEST" != false ]]; then
+          # CHANGE SLUG
+          pr_kafka_title=$(curl -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/andresmgot/kubeless/pulls/${TRAVIS_PULL_REQUEST}" | grep -i kafka || true)
+        fi
+        if [[ "$TRAVIS_BRANCH" == master || "$pr_kafka_title" != "" ]]; then
+          export SHOULD_TEST=1
+        fi
+      fi
+    fi
+install:
+  - |
+    if [[ "$SHOULD_TEST" == "1" ]]; then
+      make bootstrap
+    fi
+    if [[ "$SHOULD_INSTALL_GCLOUD" == "1" ]]; then
       export GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/client_secrets.json
       openssl aes-256-cbc -K $encrypted_1dbafa65b3ad_key -iv $encrypted_1dbafa65b3ad_iv -in .github/gcloud.json.enc -out $GOOGLE_APPLICATION_CREDENTIALS -d
       if [ ! -d $HOME/gcloud/google-cloud-sdk ]; then
@@ -59,32 +85,24 @@ install:
 
 script:
   - |
-    make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
-    # make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
-    make all-yaml
-    case $TEST_TARGET in
-    unit)
-      make test
-      make validation
-      ;;
-    minikube)
-      ./script/integration-tests minikube deployment
-      ./script/integration-tests minikube basic
-      ;;
-    minikube_kafka)
-      if [[ "$TRAVIS_PULL_REQUEST" != false ]]; then
-        # CHANGE SLUG
-        pr_kafka_title=$(curl -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/andresmgot/kubeless/pulls/${TRAVIS_PULL_REQUEST}" | grep -i kafka || true)
-      fi
-      if [[ "$TRAVIS_BRANCH" == master || "$pr_kafka_title" != "" ]]; then
+    if [[ "$SHOULD_TEST" == "1" ]]; then
+      make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
+      make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
+      make all-yaml
+      case $TEST_TARGET in
+      unit)
+        make test
+        make validation
+        ;;
+      minikube)
+        ./script/integration-tests minikube deployment
+        ./script/integration-tests minikube basic
+        ;;
+      minikube_kafka)
         ./script/integration-tests minikube deployment
         ./script/integration-tests minikube kafka
-      else
-        echo "Skipping Kafka tests"
-      fi
-      ;;
-    GKE)
-      if [[ -n "$GKE_ADMIN" && "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
+        ;;
+      GKE)
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         docker push $CONTROLLER_IMAGE
         sed -i.bak 's/'":latest"'/'":${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}"'/g' kubeless.yaml
@@ -97,11 +115,11 @@ script:
           bash -c 'grep -q "No resources found" <(timeout 60 kubectl get pods -n kubeless -w 2>&1)'
         fi
         ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${GKE_CLUSTER}
-      else
-        echo "Skipping GKE tests"
-      fi
-      ;;
-    esac
+        ;;
+      esac
+    else
+      echo "Skipping tests"
+    fi
 
 after_success:
   - |
@@ -113,6 +131,11 @@ after_success:
     fi
 
 before_deploy:
+  - |
+    if [[ "$SHOULD_TEST" != "1" ]]; then
+      echo "Unable to release a job that has not being tested!"
+      return 1
+    fi
   - make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary-cross
   - for d in bundles/kubeless_*; do zip -r9 $d.zip $d/; done
   - |
