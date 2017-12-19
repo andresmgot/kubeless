@@ -41,7 +41,7 @@ before_install:
     else
       # In case of GKE we will only want to build if it is
       # a build of a branch in the kubeless/kubeless repository
-      if [[ "$TEST_TARGET" == "GKE" && -n "$GKE_ADMIN" && "$TRAVIS_EVENT_TYPE" != "pull_request" ]];
+      if [[ "$TEST_TARGET" == "GKE" && -n "$GKE_ADMIN" && "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
         export SHOULD_TEST=1
         export SHOULD_INSTALL_GCLOUD=1
       fi
