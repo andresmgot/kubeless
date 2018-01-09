@@ -36,6 +36,7 @@ before_install:
   - set -e
   # Decide if we should run the tests
   - |
+    echo "Should test? $SHOULD_TEST"
     case $TEST_TARGET in
     # We will always build assets when doing unit tests or minikube end-2-end tests
     unit|minikube)
@@ -53,12 +54,15 @@ before_install:
     # it is a Pull Request related to Kafka (discovered from the PR title)
     # or if the build is from the "master" branch
     minikube_kafka)
+      echo "minikube_kafka scenario"
       if [[ "$TRAVIS_PULL_REQUEST" != false ]]; then
         pr_kafka_title=$(curl -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/${TRAVIS_PULL_REQUEST}" | grep title | grep -i kafka || true)
       fi
+      echo "PR Title: ${pr_kafka_title}"
       if [[ "$TRAVIS_BRANCH" == master || "$pr_kafka_title" != "" ]]; then
         export SHOULD_TEST=1
       fi
+      echo "Should test? $SHOULD_TEST"
       ;;
     esac
 install:
@@ -82,8 +86,7 @@ install:
         gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
       fi
       echo "Starting GKE cluster"
-      ./script/start-gke-env.sh $GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN > $TRAVIS_BUILD_DIR/gke-start.log 2>&1 &
-      GKE_START_PID=$!
+      ./script/start-gke-env.sh $GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN
     fi
 
 script:
@@ -110,9 +113,6 @@ script:
       GKE)
         docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
         docker push $CONTROLLER_IMAGE
-        echo "Waiting for the GKE cluster to be ready"
-        tail -f $TRAVIS_BUILD_DIR/gke-start.log &
-        wait $GKE_START_PID
         if ! kubectl get pods -n kubeless 2>&1 | grep -q "No resources found"; then
           echo "Waiting for a previous installation to be cleaned"
           bash -c 'grep -q "No resources found" <(timeout 60 kubectl get pods -n kubeless -w 2>&1)'
