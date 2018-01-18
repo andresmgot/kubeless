@@ -281,6 +281,7 @@ pubsub-python36-verify:
 	$$found
 
 pubsub-nodejs:
+	kubeless topic create s3-nodejs
 	kubeless function deploy pubsub-nodejs --trigger-topic s3-nodejs --runtime nodejs6 --handler pubsub-nodejs.handler --from-file nodejs/helloevent.js
 
 pubsub-nodejs-verify:
