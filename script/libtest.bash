@@ -42,14 +42,11 @@ k8s_wait_for_pod_ready() {
     # Retries just in case it is not stable
     local -i successCount=0
     while [ "$successCount" -lt "3" ]; do
-        pod_info=$(kubectl get pod "${@}")
-        echo_info "POD: $pod_info"
-        echo_info $(kubectl logs -n kubeless -l kubeless=controller)
-        if echo $pod_info |&grep -q Running; then
+        if kubectl get pod "${@}" |&grep -q Running; then
             ((successCount=successCount+1))
         fi
         ((cnt=cnt-1)) || return 1
-        sleep 5
+        sleep 1
     done
 }
 k8s_wait_for_pod_count() {
