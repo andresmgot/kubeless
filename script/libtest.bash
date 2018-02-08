@@ -44,7 +44,7 @@ k8s_wait_for_pod_ready() {
     while [ "$successCount" -lt "3" ]; do
         pod_info=$(kubectl get pod "${@}")
         echo_info "POD: $pod_info"
-        echo_info $(kubectl logs -n kubeless -l kubeless=controller)
+        echo_info $(kubectl describe pod "${@}")
         if echo $pod_info |&grep -q Running; then
             ((successCount=successCount+1))
         fi
