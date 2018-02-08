@@ -40,6 +40,14 @@ load ../script/libtest
   deploy_function post-php
   deploy_function custom-get-python
 }
+@test "Test function: get-php" {
+  verify_function get-php
+  kubeless_function_delete get-php
+}
+@test "Test function: get-php-deps" {
+  verify_function get-php-deps
+  kubeless_function_delete get-php-deps
+}
 @test "Test function: get-python" {
   verify_function get-python
 }
@@ -97,14 +105,6 @@ load ../script/libtest
 @test "Test function: get-ruby-deps" {
   verify_function get-ruby-deps
   kubeless_function_delete get-ruby-deps
-}
-@test "Test function: get-php" {
-  verify_function get-php
-  kubeless_function_delete get-php
-}
-@test "Test function: get-php-deps" {
-  verify_function get-php-deps
-  kubeless_function_delete get-php-deps
 }
 @test "Test function: get-dotnetcore" {
   skip "This test is flaky until kubeless/kubeless/issues/395 is fixed"
