@@ -86,7 +86,7 @@ install:
         gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
       fi
       echo "Starting GKE cluster"
-      export GKE_CLUSTER_NAME=${GKE_CLUSTER}_${TRAVIS_BRANCH}
+      export GKE_CLUSTER_NAME=${GKE_CLUSTER}-${TRAVIS_BRANCH}
       ./script/start-gke-env.sh $GKE_CLUSTER_NAME $ZONE $GKE_VERSION $GKE_ADMIN > $TRAVIS_BUILD_DIR/gke-start.log 2>&1 &
       GKE_START_PID=$!
     fi
