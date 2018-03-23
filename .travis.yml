@@ -86,8 +86,8 @@ install:
         gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
       fi
       echo "Starting GKE cluster"
-      export GKE_CLUSTER=${GKE_CLUSTER}_${TRAVIS_BRANCH}
-      ./script/start-gke-env.sh $GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN > $TRAVIS_BUILD_DIR/gke-start.log 2>&1 &
+      export GKE_CLUSTER_NAME=${GKE_CLUSTER}_${TRAVIS_BRANCH}
+      ./script/start-gke-env.sh $GKE_CLUSTER_NAME $ZONE $GKE_VERSION $GKE_ADMIN > $TRAVIS_BUILD_DIR/gke-start.log 2>&1 &
       GKE_START_PID=$!
     fi
 
@@ -126,7 +126,7 @@ script:
           echo "Waiting for a previous installation to be cleaned"
           bash -c 'grep -q "No resources found" <(timeout 60 kubectl get pods -n kubeless -w 2>&1)'
         fi
-        ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${GKE_CLUSTER}
+        ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${GKE_CLUSTER_NAME}
         ;;
       esac
     else
