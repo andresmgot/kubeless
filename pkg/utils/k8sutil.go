@@ -738,6 +738,13 @@ func populatePodSpec(funcObj *kubelessApi.Function, lr *langruntime.Langruntimes
 			},
 		},
 	}
+	runtimeUser := int64(1000)
+	if result.SecurityContext == nil {
+		result.SecurityContext = &v1.PodSecurityContext{
+			RunAsUser: &runtimeUser,
+			FSGroup:   &runtimeUser,
+		}
+	}
 	// prepare init-containers if some function is specified
 	if funcObj.Spec.Function != "" {
 		fileName, err := getFileName(funcObj.Spec.Handler, funcObj.Spec.FunctionContentType, funcObj.Spec.Runtime, lr)
