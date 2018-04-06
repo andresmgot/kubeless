@@ -14,6 +14,7 @@ services:
 env:
   matrix:
     - TEST_TARGET=unit
+    - TEST_TARGET=build_runtimes
     - TEST_TARGET=minikube
     - TEST_TARGET=minikube_core_triggers
     - TEST_TARGET=minikube_build_functions
@@ -74,6 +75,9 @@ before_install:
         export SHOULD_TEST=1
       fi
       ;;
+    build_runtimes)
+      export SHOULD_TEST=0
+      ;;
     esac
 install:
   - |
@@ -103,16 +107,19 @@ install:
 
 script:
   - |
-    if [[ "$SHOULD_TEST" == "1" ]]; then
+    if [[ "$TEST_TARGET" == "build_runtimes" ]]; then
+      docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
       export RUNTIME_TAG_MODIFIER=-${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}
-      sed -i.bak -r 's/("runtimeImage": "kubeless[^"]*)/\1'"$RUNTIME_TAG_MODIFIER"'/g' kubeless.jsonnet
       for m in $( ls docker/runtime/*/Makefile); do
         dir=$(dirname $m)
         make -C $dir build-all
+        make -C $dir push-all
       done
     fi
+    sed -i.bak -r 's/("runtimeImage": "kubeless[^"]*)/\1'"$RUNTIME_TAG_MODIFIER"'/g' kubeless.jsonnet
   - |
     if [[ "$SHOULD_TEST" == "1" ]]; then
+      git fetch --unshallow
       make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
       make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
       make all-yaml
