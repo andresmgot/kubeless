@@ -10,5 +10,5 @@ php-cs-fixer:
 	docker run -it --rm -v $${PWD}:/wd -w /wd shouldbee/php-cs-fixer fix Controller.php || true
 
 # Mandatory jobs
-build-all: build6 build8
-push-all: push6 push8
+build-all: build
+push-all: push
