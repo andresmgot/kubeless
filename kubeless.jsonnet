@@ -79,19 +79,19 @@ local runtime_images ='[
       {
         "name": "python27",
         "version": "2.7",
-        "runtimeImage": "kubeless/python@sha256:565bebecb08d9a7b804c588105677a3572f10ff2032cef7727975061a653fb98",
+        "runtimeImage": "kubeless/python:2.7",
         "initImage": "python:2.7"
       },
       {
         "name": "python34",
         "version": "3.4",
-        "runtimeImage": "kubeless/python@sha256:4eead12b5631d91130fde8740eab9ff96d7f231c1da45c8d30db7ada523b70b1",
+        "runtimeImage": "kubeless/python:3.4",
         "initImage": "python:3.4"
       },
       {
         "name": "python36",
         "version": "3.6",
-        "runtimeImage": "kubeless/python@sha256:5a84245496452ce87e8c9a4f120357dce842f293e3ce9252a30fd9141045c7ca",
+        "runtimeImage": "kubeless/python:3.6",
         "initImage": "python:3.6"
       }
     ],
@@ -104,13 +104,13 @@ local runtime_images ='[
       {
         "name": "node6",
         "version": "6",
-        "runtimeImage": "kubeless/nodejs@sha256:9231b3a983407a1538375f508dc7dc8e30770f2633e0cd0a0e642ef6b7f0fbea",
+        "runtimeImage": "kubeless/nodejs:6",
         "initImage": "node:6.10"
       },
       {
         "name": "node8",
         "version": "8",
-        "runtimeImage": "kubeless/nodejs@sha256:2fc2e4b8d6e2bb1bda75e431082a998e623dabe51cfb6cab19edfce835289622",
+        "runtimeImage": "kubeless/nodejs:8",
         "initImage": "node:8"
       }
     ],
@@ -123,7 +123,7 @@ local runtime_images ='[
       {
         "name": "ruby24",
         "version": "2.4",
-        "runtimeImage": "kubeless/ruby@sha256:a0c5700b9dd1bf14917a6be3dc05d18f059c045a89ef4252b3048fbb902e4624",
+        "runtimeImage": "kubeless/ruby:2.4",
         "initImage": "bitnami/ruby:2.4"
       }
     ],
@@ -136,7 +136,7 @@ local runtime_images ='[
       {
         "name": "php72",
         "version": "7.2",
-        "runtimeImage": "kubeless/php@sha256:6be0b60b54a2a945a0a95fd4453f197af5ce306be7c921e9ab1c785652f6e618",
+        "runtimeImage": "kubeless/php:7.2",
         "initImage": "composer:1.6"
       }
     ],
