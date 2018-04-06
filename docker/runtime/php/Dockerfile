@@ -44,6 +44,12 @@ RUN composer install --prefer-dist --optimize-autoloader
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY config/default.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 8080
+RUN rm /etc/nginx/sites-available/default
+RUN mkdir -p /app
+RUN chown -R 1000:1000 /app
+RUN chown -R 1000:1000 /var/lib/nginx
+RUN chown -R 1000:1000 /var/log/nginx
+USER 1000
+
 ENTRYPOINT [ "" ]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

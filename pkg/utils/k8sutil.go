@@ -738,13 +738,6 @@ func populatePodSpec(funcObj *kubelessApi.Function, lr *langruntime.Langruntimes
 			},
 		},
 	}
-	runtimeUser := int64(1000)
-	if result.SecurityContext == nil {
-		result.SecurityContext = &v1.PodSecurityContext{
-			RunAsUser: &runtimeUser,
-			FSGroup:   &runtimeUser,
-		}
-	}
 	// prepare init-containers if some function is specified
 	if funcObj.Spec.Function != "" {
 		fileName, err := getFileName(funcObj.Spec.Handler, funcObj.Spec.FunctionContentType, funcObj.Spec.Runtime, lr)
@@ -1067,6 +1060,15 @@ func EnsureFuncDeployment(client kubernetes.Interface, funcObj *kubelessApi.Func
 		},
 	}
 	dpm.Spec.Template.Spec.Containers[0].LivenessProbe = livenessProbe
+
+	// Add security context
+	runtimeUser := int64(1000)
+	if dpm.Spec.Template.Spec.SecurityContext == nil {
+		dpm.Spec.Template.Spec.SecurityContext = &v1.PodSecurityContext{
+			RunAsUser: &runtimeUser,
+			FSGroup:   &runtimeUser,
+		}
+	}
 
 	_, err = client.ExtensionsV1beta1().Deployments(funcObj.ObjectMeta.Namespace).Create(dpm)
 	if err != nil && k8sErrors.IsAlreadyExists(err) {
