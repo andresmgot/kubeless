@@ -11,13 +11,11 @@ jobs:
       - checkout
 
       # specify any bash command here prefixed with `run: `
-      - run: |
-          echo "
-          export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_PREVIOUS_BUILD_NUM}
-          export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}
-          export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}
-          export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}
-          export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_PREVIOUS_BUILD_NUM}" >> $BASH_ENV
+      - run: echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: env
       - run: echo $CONTROLLER_IMAGE
       - run: make bootstrap
