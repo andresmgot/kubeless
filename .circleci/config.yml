@@ -24,9 +24,13 @@ jobs:
       - run: make VERSION=${CONTROLLER_TAG} binary
       - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
       - run: make all-yaml
+      - run: make test
+      - run: make validation
       - persist_to_workspace:
           root: /go
-          paths: src
+          paths: 
+            - bin
+            - src/github.com/kubeless/kubeless/docker
     environment:
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
@@ -36,15 +40,6 @@ jobs:
       TEST_DEBUG: "1"
       GKE_VERSION: 1.8.8-gke.0
       MINIKUBE_VERSION: v0.25.2
-  test:
-    docker:
-      - image: circleci/golang:1.9 
-    working_directory: /go/src/github.com/kubeless/kubeless
-    steps:
-      - attachs_workspace:
-          at: /go
-      - run: make test
-      - run: make validation
   minikube:
     docker:
       - image: circleci/golang:1.9 
