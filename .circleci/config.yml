@@ -22,8 +22,6 @@ jobs:
       - run: echo $CONTROLLER_IMAGE
       - run: make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
-      - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
-      - run: make all-yaml
       - run: make test
       - run: make validation
       - persist_to_workspace:
@@ -55,13 +53,15 @@ jobs:
       MINIKUBE_VERSION: v0.25.2
     steps:
       - setup_remote_docker
-      - attachs_workspace:
+      - attach_workspace:
           at: /go
       - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_PREVIOUS_BUILD_NUM}" >> $BASH_ENV
       - run: echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
+      - run: make all-yaml
       - run: ./script/integration-tests minikube deployment
       - run: ./script/integration-tests minikube basic
 
@@ -70,9 +70,6 @@ workflows:
   one_and_two:
     jobs:
       - build
-      - test:
-          requires:
-            - build
       - minikube:
           requires:
             - build
