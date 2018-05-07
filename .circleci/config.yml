@@ -12,8 +12,22 @@ jobs:
 
       # specify any bash command here prefixed with `run: `
       - run: make bootstrap
-      - run: make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
+      - run: make VERSION=${CIRCLE_TAG:-build-$CIRCLE_PREVIOUS_BUILD_NUM} binary
       - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
       - run: make all-yaml
       - run: make test
       - run: make validation
+    environment:
+      CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
+      BUILDER_IMAGE_NAME: kubeless/function-image-builder
+      CONTROLLER_TAG: ${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}
+      CONTROLLER_IMAGE: ${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}
+      BUILDER_IMAGE: ${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}
+      KAFKA_CONTROLLER_IMAGE_NAME: bitnami/kafka-trigger-controller
+      KAFKA_CONTROLLER_IMAGE: ${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}
+      NATS_CONTROLLER_IMAGE_NAME: bitnami/nats-trigger-controller
+      NATS_CONTROLLER_IMAGE: ${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}
+      CGO_ENABLED: "0"
+      TEST_DEBUG: "1"
+      GKE_VERSION: 1.8.8-gke.0
+      MINIKUBE_VERSION: v0.25.2
