@@ -12,7 +12,6 @@ jobs:
 
       # specify any bash command here prefixed with `run: `
       - run: make bootstrap
-      - run: git fetch --unshallow
       - run: make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
       - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
       - run: make all-yaml
