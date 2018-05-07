@@ -17,7 +17,7 @@ jobs:
       # - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       # - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       # - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
-      - run: make bootstrap
+      - run: sudo -E make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
       # - run: make test
       # - run: make validation
@@ -52,7 +52,7 @@ jobs:
       MINIKUBE_VERSION: v0.25.2
     steps:
       - checkout
-      - run: make bootstrap
+      - run: sudo -E make bootstrap
       - attach_workspace:
           at: /tmp/go
       - run: sudo cp -r /tmp/go/bin/* /usr/local/bin/
