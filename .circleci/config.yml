@@ -18,7 +18,7 @@ jobs:
           export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}
           export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}
           export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}
-          \n" >> BASH_ENV
+          \n" >> $BASH_ENV
       - run: env
       - run: echo $CONTROLLER_IMAGE
       - run: make bootstrap
