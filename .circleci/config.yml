@@ -9,7 +9,6 @@ jobs:
     working_directory: /go/src/github.com/kubeless/kubeless
     steps:
       - setup_remote_docker
-      - run: docker ps
       - checkout
 
       # specify any bash command here prefixed with `run: `
@@ -20,15 +19,14 @@ jobs:
       - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
-      - run: env
       - run: echo $CONTROLLER_IMAGE
       - run: make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
-      - run: kubeless version
       - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
       - run: make all-yaml
-      - run: make test
-      - run: make validation
+      - persist_to_workspace:
+          root: /go
+          paths: /src
     environment:
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
@@ -38,3 +36,49 @@ jobs:
       TEST_DEBUG: "1"
       GKE_VERSION: 1.8.8-gke.0
       MINIKUBE_VERSION: v0.25.2
+  test:
+    docker:
+      - image: circleci/golang:1.9 
+    working_directory: /go/src/github.com/kubeless/kubeless
+    steps:
+      - attachs_workspace:
+          at: /go
+      - run: make test
+      - run: make validation
+  minikube:
+    docker:
+      - image: circleci/golang:1.9 
+    working_directory: /go/src/github.com/kubeless/kubeless
+    environment:
+      CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
+      BUILDER_IMAGE_NAME: kubeless/function-image-builder
+      KAFKA_CONTROLLER_IMAGE_NAME: bitnami/kafka-trigger-controller
+      NATS_CONTROLLER_IMAGE_NAME: bitnami/nats-trigger-controller
+      CGO_ENABLED: "0"
+      TEST_DEBUG: "1"
+      GKE_VERSION: 1.8.8-gke.0
+      MINIKUBE_VERSION: v0.25.2
+    steps:
+      - setup_remote_docker
+      - attachs_workspace:
+          at: /go
+      - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_PREVIOUS_BUILD_NUM}" >> $BASH_ENV
+      - run: echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      - run: ./script/integration-tests minikube deployment
+      - run: ./script/integration-tests minikube basic
+
+workflows:
+  version: 2
+  one_and_two:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - minikube:
+          requires:
+            - build
+
