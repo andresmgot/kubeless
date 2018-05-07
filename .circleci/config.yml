@@ -8,10 +8,8 @@ jobs:
       - image: circleci/golang:1.9 
     working_directory: /go/src/github.com/kubeless/kubeless
     steps:
-      - setup_remote_docker
+      # - setup_remote_docker
       - checkout
-
-      # specify any bash command here prefixed with `run: `
       # It is not possible to resolve env vars in the environment section:
       # https://discuss.circleci.com/t/using-environment-variables-in-config-yml-not-working/14237
       - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
@@ -31,6 +29,7 @@ jobs:
             - bin
             - src/github.com/kubeless/kubeless/*yaml
     environment:
+      # TODO: Move this to a context
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
       KAFKA_CONTROLLER_IMAGE_NAME: bitnami/kafka-trigger-controller
@@ -40,10 +39,10 @@ jobs:
       GKE_VERSION: 1.8.8-gke.0
       MINIKUBE_VERSION: v0.25.2
   minikube:
-    docker:
-      - image: circleci/golang:1.9 
+    machine: true
     working_directory: /go/src/github.com/kubeless/kubeless
     environment:
+      # TODO: Move this to a context
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
       KAFKA_CONTROLLER_IMAGE_NAME: bitnami/kafka-trigger-controller
