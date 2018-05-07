@@ -16,17 +16,20 @@ jobs:
       # https://discuss.circleci.com/t/using-environment-variables-in-config-yml-not-working/14237
       - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
       - run: echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
-      - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
-      - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
-      - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      # - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      # - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+      # - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
       # - run: make test
       # - run: make validation
+      - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
+      - run: make all-yaml
       - persist_to_workspace:
           root: /go
           paths: 
             - bin
+            - github.com/kubeless/kubeless/*yaml
     environment:
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
@@ -55,14 +58,12 @@ jobs:
       - run: make bootstrap
       - attach_workspace:
           at: /tmp/go
-      - run: rsync -r -v /tmp/go/* /go/
+      - run: cp -r /tmp/go/* /go/
       - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
       - run: echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
-      - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
-      - run: make all-yaml
       - run: ./script/integration-tests minikube deployment
       - run: ./script/integration-tests minikube basic
 
