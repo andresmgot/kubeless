@@ -12,15 +12,9 @@ jobs:
 
       # specify any bash command here prefixed with `run: `
       - run: make bootstrap
-      - run: |
-      git fetch --unshallow
-      make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
-      make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
-      make all-yaml
-      sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kubeless.yaml
-      sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kubeless-non-rbac.yaml
-      sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kubeless-openshift.yaml
-      sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kafka-zookeeper.yaml
-      sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' nats.yaml
-      make test
-      make validation
+      - run: git fetch --unshallow
+      - run: make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
+      - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
+      - run: make all-yaml
+      - run: make test
+      - run: make validation
