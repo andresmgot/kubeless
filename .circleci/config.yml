@@ -22,8 +22,8 @@ jobs:
       - run: echo $CONTROLLER_IMAGE
       - run: make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
-      - run: make test
-      - run: make validation
+      # - run: make test
+      # - run: make validation
       - persist_to_workspace:
           root: /go
           paths: 
@@ -52,6 +52,7 @@ jobs:
       GKE_VERSION: 1.8.8-gke.0
       MINIKUBE_VERSION: v0.25.2
     steps:
+      - checkout
       - setup_remote_docker
       - attach_workspace:
           at: /go
