@@ -2,16 +2,14 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
-machine:
-  services:
-    - docker
-
 jobs:
   build:
     docker:
       - image: circleci/golang:1.9 
     working_directory: /go/src/github.com/kubeless/kubeless
     steps:
+      - setup_remote_docker
+      - run: docker ps
       - checkout
 
       # specify any bash command here prefixed with `run: `
