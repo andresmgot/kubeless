@@ -19,7 +19,6 @@ jobs:
       - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
-      - run: echo $CONTROLLER_IMAGE
       - run: make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
       # - run: make test
@@ -52,9 +51,11 @@ jobs:
       MINIKUBE_VERSION: v0.25.2
     steps:
       - checkout
+      - run: find /go/bin
       - setup_remote_docker
       - attach_workspace:
-          at: /go
+          at: /tmp/go
+      - run: mv /tmp/go/bin/* /go/bin/
       - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_PREVIOUS_BUILD_NUM}" >> $BASH_ENV
       - run: echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
