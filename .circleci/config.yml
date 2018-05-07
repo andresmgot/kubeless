@@ -29,8 +29,7 @@ jobs:
           root: /go
           paths: 
             - bin
-            - github.com/kubeless/kubeless/*yaml
-            - github.com/kubeless/kubeless/docker
+            - src/github.com/kubeless/kubeless/*yaml
     environment:
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
@@ -66,7 +65,7 @@ jobs:
       - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export KUBECFG_JPATH=/go/src/github.com/kubeless/kubeless/ksonnet-lib" >> $BASH_ENV
-      - run: echo "export PATH=/go/src/github.com/kubeless/kubeless/bats/bin" >> $BASH_ENV
+      - run: echo "export PATH=/go/src/github.com/kubeless/kubeless/bats/bin:$PATH" >> $BASH_ENV
       - run: ./script/integration-tests minikube deployment
       - run: ./script/integration-tests minikube basic
 
