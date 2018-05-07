@@ -2,6 +2,26 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
+workflows:
+  version: 2
+  kubeless:
+    jobs:
+      - build
+      - minikube:
+          requires:
+            - build
+      - minikube_core_triggers:
+          requires:
+            - build
+      - minikube_build_functions:
+          requires:
+            - build
+      - minikube_kafka:
+          requires:
+            - build
+      - minikube_nats:
+          requires:
+            - build
 jobs:
   build:
     docker:
@@ -177,25 +197,3 @@ jobs:
       - run: echo "export PATH=$(pwd)/bats/libexec:$PATH" >> $BASH_ENV
       - run: ./script/integration-tests minikube deployment
       - run: ./script/integration-tests minikube nats
-
-workflows:
-  version: 2
-  kubeless:
-    jobs:
-      - build
-      - minikube:
-          requires:
-            - build
-      - minikube_core_triggers:
-          requires:
-            - build
-      - minikube_build_functions:
-          requires:
-            - build
-      - minikube_kafka:
-          requires:
-            - build
-      - minikube_nats:
-          requires:
-            - build
-
