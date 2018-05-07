@@ -23,13 +23,14 @@ jobs:
       - run: make VERSION=${CONTROLLER_TAG} binary
       # - run: make test
       # - run: make validation
-      - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
+      # - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
       - run: make all-yaml
       - persist_to_workspace:
           root: /go
           paths: 
             - bin
             - github.com/kubeless/kubeless/*yaml
+            - github.com/kubeless/kubeless/docker
     environment:
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
