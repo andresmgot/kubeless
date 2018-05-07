@@ -65,9 +65,7 @@ jobs:
       - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export KUBECFG_JPATH=/go/src/github.com/kubeless/kubeless/ksonnet-lib" >> $BASH_ENV
-      - run: echo "export PATH=/go/bin:/go/src/github.com/kubeless/kubeless/bats/bin:$PATH" >> $BASH_ENV
-      - run: which kubeless
-      - run: which kubectl
+      - run: echo "export PATH=/go/src/github.com/kubeless/kubeless/bats/libexec:/go/src/github.com/kubeless/kubeless/bats/bin:$PATH" >> $BASH_ENV
       - run: ./script/integration-tests minikube deployment
       - run: ./script/integration-tests minikube basic
 
