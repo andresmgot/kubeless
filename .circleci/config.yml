@@ -40,7 +40,6 @@ jobs:
       MINIKUBE_VERSION: v0.25.2
   minikube:
     machine: true
-    working_directory: /go/src/github.com/kubeless/kubeless
     environment:
       # TODO: Move this to a context
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
@@ -56,7 +55,8 @@ jobs:
       - run: make bootstrap
       - attach_workspace:
           at: /tmp/go
-      - run: cp -r /tmp/go/* /go/
+      - run: sudo cp -r /tmp/go/bin/* /usr/local/bin/
+      - run: cp -r /tmp/go/src/github.com/kubeless/kubeless/*yaml .
       - run: echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
       - run: echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
