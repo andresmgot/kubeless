@@ -28,7 +28,6 @@ jobs:
           root: /go
           paths: 
             - bin
-            - src/github.com/kubeless/kubeless/docker
     environment:
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
@@ -68,7 +67,7 @@ jobs:
 
 workflows:
   version: 2
-  one_and_two:
+  kubeless:
     jobs:
       - build
       - minikube:
