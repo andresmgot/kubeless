@@ -127,8 +127,8 @@ bootstrap: bats ksonnet-lib
 
 	@if ! which kubectl >/dev/null; then \
 	KUBECTL_VERSION=$$(wget -qO- https://storage.googleapis.com/kubernetes-release/release/stable.txt); \
-	sudo wget -q -O /usr/local/bin/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$$KUBECTL_VERSION/bin/$$(go env GOOS)/$$(go env GOARCH)/kubectl; \
-	sudo chmod +x /usr/local/bin/bin/kubectl; \
+	sudo wget -q -O /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$$KUBECTL_VERSION/bin/$$(go env GOOS)/$$(go env GOARCH)/kubectl; \
+	sudo chmod +x /usr/local/bin/kubectl; \
 	fi
 
 build_and_test:
