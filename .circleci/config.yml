@@ -26,7 +26,7 @@ jobs:
       - run: make all-yaml
       - persist_to_workspace:
           root: /go
-          paths: /src
+          paths: src
     environment:
       CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
       BUILDER_IMAGE_NAME: kubeless/function-image-builder
