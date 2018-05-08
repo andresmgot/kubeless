@@ -57,6 +57,43 @@ restore_workspace: &restore_workspace
     make bootstrap
     sudo cp -r /tmp/go/bin/* /usr/local/bin/
     cp -r /tmp/go/src/github.com/kubeless/kubeless/*yaml .
+should_test: &should_test
+  run: |
+    case $CIRCLE_JOB in
+    # In case of GKE we will only want to build if it is
+    # a build of a branch in the kubeless/kubeless repository
+    GKE)
+      if [[ -n "$GKE_ADMIN" && "$TRAVIS_EVENT_TYPE" != "pull_request" ]]; then
+        export SHOULD_TEST=1
+      fi
+      ;;
+    # In kase of minikube+kafka we want to test it if
+    # it is a Pull Request related to Kafka (discovered from the PR title)
+    # or if the build is from the "master" branch
+    minikube_kafka)
+      if [[ "$TRAVIS_PULL_REQUEST" != false ]]; then
+        pr_kafka_title=$(curl "https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/${TRAVIS_PULL_REQUEST}" | grep title || true)
+      fi
+      if [[ "$TRAVIS_PULL_REQUEST" == false || "$pr_kafka_title" == "" || "$pr_kafka_title" =~ ^.*(Kafka|kafka|KAFKA).*$ ]]; then
+        export SHOULD_TEST=1
+      fi
+      ;;
+    # In kase of minikube+NATS we want to test it if
+    # it is a Pull Request related to NATS (discovered from the PR title)
+    # or if the build is from the "master" branch
+    minikube_nats)
+      if [[ "$TRAVIS_PULL_REQUEST" != false ]]; then
+        pr_nats_title=$(curl "https://api.github.com/repos/$TRAVIS_REPO_SLUG/pulls/${TRAVIS_PULL_REQUEST}" | grep title || true)
+      fi
+      if [[ "$TRAVIS_PULL_REQUEST" == false || "$pr_nats_title" == "" || "$pr_nats_title" =~ ^.*(Nats|nats|NATS).*$ ]]; then
+        export SHOULD_TEST=1
+      fi
+      ;;
+    esac
+    if [[ "$SHOULD_TEST" != 1 ]];
+      exit 0
+    fi
+
 
 jobs:
   build:
@@ -84,7 +121,6 @@ jobs:
       - run: "sed -i.bak 's/image: bitnami/image: andresmgot/g' kubeless-non-rbac.yaml"
       - run: "sed -i.bak 's/image: bitnami/image: andresmgot/g' nats.yaml"
       - run: "sed -i.bak 's/image: bitnami\\/kafka-trigger-controller/image: andresmgot\\/kafka-trigger-controller/g' kafka-zookeeper.yaml"
-      - run: cat kubeless.yaml
       - persist_to_workspace:
           root: /go
           paths: 
@@ -109,7 +145,6 @@ jobs:
       - run: docker push $NATS_CONTROLLER_IMAGE
       - run: make function-image-builder FUNCTION_IMAGE_BUILDER=$BUILDER_IMAGE
       - run: docker push $BUILDER_IMAGE
-
   minikube:
     <<: *defaults
     machine: true
@@ -157,6 +192,7 @@ jobs:
     <<: *defaults
     machine: true
     steps:
+      - <<: *exports
       - checkout
       - <<: *exports
       - attach_workspace:
@@ -168,6 +204,7 @@ jobs:
     <<: *defaults
     machine: true
     steps:
+      - <<: *exports
       - checkout
       - <<: *exports
       - attach_workspace:
@@ -180,14 +217,15 @@ jobs:
     docker:
       - image: circleci/golang:1.9 
     steps:
+      - <<: *exports
       - checkout
       - <<: *exports
       - attach_workspace:
           at: /tmp/go
       - <<: *restore_workspace
-      - run: ./script/install-gcloud-and-start.sh $(pwd)
+      - run: ./script/install-gcloud-and-start.sh $(pwd) > /dev/null
       - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH} | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
-      - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN
+      - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN > /dev/null
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} deployment
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} basic
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} cronjob
