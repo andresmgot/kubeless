@@ -26,6 +26,9 @@ workflows:
       - minikube_nats:
           requires:
             - build
+      - GKE:
+          requires:
+            - build
 defaults: &defaults
   environment:
     # TODO: Restore bitnami/kubeless account
