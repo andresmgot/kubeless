@@ -9,11 +9,10 @@ if [ ! -d $HOME/gcloud/google-cloud-sdk ]; then
     cd $HOME/gcloud &&
     tar xzf google-cloud-sdk-187.0.0-linux-x86_64.tar.gz &&
     printf '\ny\n\ny\ny\n' | ./google-cloud-sdk/install.sh &&
+    sudo ln -s $HOME/gcloud/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
     cd $BUILD_DIR;
 fi
 gcloud -q config set project $GKE_PROJECT
 if [ -a $GOOGLE_APPLICATION_CREDENTIALS ]; then
     gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
 fi
-echo "Starting GKE cluster"
-./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN
