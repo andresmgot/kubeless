@@ -41,7 +41,8 @@ exports: &exports
   # It is not possible to resolve env vars in the environment section:
   # https://discuss.circleci.com/t/using-environment-variables-in-config-yml-not-working/14237
   run: |
-    echo "export CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
+    CONTROLLER_TAG=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}
+    echo "export CONTROLLER_TAG=${CONTROLLER_TAG}" >> $BASH_ENV
     echo "export CONTROLLER_IMAGE=${CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
     echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
     echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
@@ -81,6 +82,7 @@ jobs:
             - src/github.com/kubeless/kubeless/*yaml
   build_images:
     <<: *defaults
+    context: kubeless
     docker:
       - image: circleci/golang:1.9 
     working_directory: /go/src/github.com/kubeless/kubeless
