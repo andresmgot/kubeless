@@ -248,11 +248,7 @@ jobs:
     docker:
       - image: circleci/golang:1.9 
     steps:
-      - checkout
-      - <<: *exports
-      - attach_workspace:
-          at: /tmp/go
-      - <<: *restore_workspace
+      - setup_remote_docker
       - run: |
           images=( 
             $CONTROLLER_IMAGE_NAME
