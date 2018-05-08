@@ -45,6 +45,7 @@ exports: &exports
     echo "export BUILDER_IMAGE=${BUILDER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
     echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
     echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
+    echo "export KUBECFG_JPATH=/go/src/github.com/kubeless/kubeless/ksonnet-lib" >> $BASH_ENV
     echo "export PATH=$(pwd)/bats/libexec:$PATH" >> $BASH_ENV
 restore_workspace: &restore_workspace
   run: |
