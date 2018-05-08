@@ -174,7 +174,8 @@ jobs:
       - run: ./script/integration-tests minikube nats
   GKE:
     <<: *defaults
-    docker: true
+    docker:
+      - image: circleci/golang:1.9 
     steps:
       - checkout
       - <<: *exports
