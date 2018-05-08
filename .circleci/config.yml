@@ -91,7 +91,7 @@ should_test: &should_test
       fi
       ;;
     esac
-    if [[ "$SHOULD_TEST" != "1" ]];
+    if [[ "$SHOULD_TEST" != "1" ]]; then
       exit 0
     fi
 
