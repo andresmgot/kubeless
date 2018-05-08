@@ -7,9 +7,9 @@ workflows:
   kubeless:
     jobs:
       - build
-      # - build_images:
-      #     requires:
-      #       - build
+      - build_images:
+          requires:
+            - build
       # - minikube:
       #     requires:
       #       - build
@@ -33,7 +33,7 @@ workflows:
           #   branches:
           #     only: master
           requires:
-            - build
+            - build_images
             # - minikube
             # - minikube_core_triggers
             # - minikube_build_functions
@@ -248,7 +248,6 @@ jobs:
     docker:
       - image: circleci/golang:1.9 
     steps:
-      - <<: *should_test
       - checkout
       - <<: *exports
       - attach_workspace:
