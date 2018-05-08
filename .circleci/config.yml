@@ -7,8 +7,8 @@ workflows:
   kubeless:
     jobs:
       - build
-      - build_images
-      # - build_images:
+      - build_images:
+          context: kubeless
       #     requires:
       #       - build
       - minikube:
@@ -82,7 +82,6 @@ jobs:
             - src/github.com/kubeless/kubeless/*yaml
   build_images:
     <<: *defaults
-    context: kubeless
     docker:
       - image: circleci/golang:1.9 
     working_directory: /go/src/github.com/kubeless/kubeless
