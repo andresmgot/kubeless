@@ -7,6 +7,9 @@ workflows:
   kubeless:
     jobs:
       - build
+      - build_images:
+          requires:
+            - build
       - minikube:
           requires:
             - build
@@ -24,10 +27,11 @@ workflows:
             - build
 defaults: &defaults
   environment:
-    CONTROLLER_IMAGE_NAME: bitnami/kubeless-controller-manager
-    BUILDER_IMAGE_NAME: kubeless/function-image-builder
-    KAFKA_CONTROLLER_IMAGE_NAME: bitnami/kafka-trigger-controller
-    NATS_CONTROLLER_IMAGE_NAME: bitnami/nats-trigger-controller
+    # TODO: Restore bitnami/kubeless account
+    CONTROLLER_IMAGE_NAME: andresmgot/kubeless-controller-manager
+    BUILDER_IMAGE_NAME: andresmgot/function-image-builder
+    KAFKA_CONTROLLER_IMAGE_NAME: andresmgot/kafka-trigger-controller
+    NATS_CONTROLLER_IMAGE_NAME: andresmgot/nats-trigger-controller
     CGO_ENABLED: "0"
     TEST_DEBUG: "1"
     GKE_VERSION: 1.8.8-gke.0
@@ -44,7 +48,6 @@ exports: &exports
     echo "export PATH=$(pwd)/bats/libexec:$PATH" >> $BASH_ENV
 restore_workspace: &restore_workspace
   run: |
-    make bootstrap
     sudo cp -r /tmp/go/bin/* /usr/local/bin/
     cp -r /tmp/go/src/github.com/kubeless/kubeless/*yaml .
 
@@ -55,21 +58,49 @@ jobs:
       - image: circleci/golang:1.9 
     working_directory: /go/src/github.com/kubeless/kubeless
     steps:
-      # - setup_remote_docker
       - checkout
       - <<: *exports
       - run: make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
       # - run: make test
       # - run: make validation
-      # - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
       - run: make all-yaml
-      # TODO: Build, sed and push images
+      - run: |
+        sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kubeless.yaml
+        sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kubeless-non-rbac.yaml
+        sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kubeless-openshift.yaml
+        sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' kafka-zookeeper.yaml
+        sed -i.bak 's/'":latest"'/'":${CONTROLLER_TAG}"'/g' nats.yaml
+      - run: cat kubeless.yaml
       - persist_to_workspace:
           root: /go
           paths: 
             - bin
             - src/github.com/kubeless/kubeless/*yaml
+  build_images:
+    <<: *defaults
+    docker:
+      - image: circleci/golang:1.9 
+    working_directory: /go/src/github.com/kubeless/kubeless
+    steps:
+      - setup_remote_docker
+      - checkout
+      - <<: *exports
+      - run: make bootstrap
+      - run: docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"      
+      - run: |
+        make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
+        docker push $CONTROLLER_IMAGE
+      - run: |
+        make kafka-controller-image KAFKA_CONTROLLER_IMAGE=$KAFKA_CONTROLLER_IMAGE
+        docker push $KAFKA_CONTROLLER_IMAGE
+      - run: |
+        make nats-controller-image NATS_CONTROLLER_IMAGE=$NATS_CONTROLLER_IMAGE
+        docker push $KAFKA_CONTROLLER_IMAGE
+      - run: |
+        make function-image-builder FUNCTION_IMAGE_BUILDER=$BUILDER_IMAGE
+        docker push $BUILDER_IMAGE
+
   minikube:
     <<: *defaults
     machine: true
