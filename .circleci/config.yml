@@ -80,7 +80,7 @@ jobs:
       - run: "sed -i.bak 's/builder-image: kubeless/builder-image: andresmgot/g' kubeless.yaml"
       - run: "sed -i.bak 's/image: bitnami/image: andresmgot/g' kubeless-non-rbac.yaml"
       - run: "sed -i.bak 's/image: bitnami/image: andresmgot/g' nats.yaml"
-      - run: "sed -i.bak 's/image: bitnami\/kafka-trigger-controller/image: andresmgot\/kafka-trigger-controller/g' kafka-zookeeper.yaml"
+      - run: "sed -i.bak 's/image: bitnami\\/kafka-trigger-controller/image: andresmgot\\/kafka-trigger-controller/g' kafka-zookeeper.yaml"
       - run: cat kubeless.yaml
       - persist_to_workspace:
           root: /go
