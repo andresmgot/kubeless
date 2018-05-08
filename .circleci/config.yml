@@ -43,6 +43,7 @@ exports: &exports
     echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
     echo "export PATH=$(pwd)/bats/libexec:$PATH" >> $BASH_ENV
 restore_workspace: &restore_workspace
+  run: |
     make bootstrap
     sudo cp -r /tmp/go/bin/* /usr/local/bin/
     cp -r /tmp/go/src/github.com/kubeless/kubeless/*yaml .
