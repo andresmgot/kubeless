@@ -7,9 +7,10 @@ workflows:
   kubeless:
     jobs:
       - build
-      - build_images:
-          requires:
-            - build
+      - build_images
+      # - build_images:
+      #     requires:
+      #       - build
       - minikube:
           requires:
             - build
@@ -49,6 +50,7 @@ exports: &exports
     echo "export PATH=$(pwd)/bats/libexec:$PATH" >> $BASH_ENV
 restore_workspace: &restore_workspace
   run: |
+    make bootstrap
     sudo cp -r /tmp/go/bin/* /usr/local/bin/
     cp -r /tmp/go/src/github.com/kubeless/kubeless/*yaml .
 
@@ -86,6 +88,7 @@ jobs:
       - setup_remote_docker
       - checkout
       - <<: *exports
+      - run: env
       - run: make bootstrap
       - run: docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"      
       - run: make controller-image CONTROLLER_IMAGE=$CONTROLLER_IMAGE
