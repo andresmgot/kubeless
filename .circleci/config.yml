@@ -185,8 +185,9 @@ jobs:
       - attach_workspace:
           at: /tmp/go
       - <<: *restore_workspace
-      - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${TRAVIS_BRANCH} | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
       - run: ./script/install-gcloud-and-start.sh $(pwd)
+      - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH} | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
+      - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} deployment
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} basic
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} cronjob
