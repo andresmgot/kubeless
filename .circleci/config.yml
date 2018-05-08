@@ -100,6 +100,7 @@ jobs:
       MINIKUBE_VERSION: v0.25.2
     steps:
       - checkout
+      - run: sudo apt-get install -y apache2-utils
       - run: make bootstrap
       - attach_workspace:
           at: /tmp/go
@@ -139,6 +140,10 @@ jobs:
       - run: echo "export KAFKA_CONTROLLER_IMAGE=${KAFKA_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export NATS_CONTROLLER_IMAGE=${NATS_CONTROLLER_IMAGE_NAME}:${CONTROLLER_TAG}" >> $BASH_ENV
       - run: echo "export PATH=$(pwd)/bats/libexec:$PATH" >> $BASH_ENV
+      - run: "sudo bash -c 'echo \'{\"host\": \"unix:///var/run/docker.sock\", \"storage-driver\": \"overlay2\", \"insecure-registries\" : [\"0.0.0.0/0\"]}\' > /etc/docker/daemon.json'"
+      - run: sudo service docker restart
+      - run: docker info
+      - run: docker run -d -p 5000:5000 --restart=always --name registry -v /data/docker-registry:/var/lib/registry registry:2
       - run: "sed -i.bak 's/enable-build-step: \"false\"/enable-build-step: \"true\"/g' kubeless.yaml"
       - run: "sed -i.bak 's/function-registry-tls-verify: \"true\"/function-registry-tls-verify: \"false\"/g' kubeless.yaml"
       - run: ./script/integration-tests minikube deployment
