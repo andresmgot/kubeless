@@ -41,6 +41,13 @@ workflows:
       #       - minikube_nats
       #       - GKE
       - release:
+          filters:
+            branches:
+              ignore: /.*/
+	          tags:
+	            only: /^v.*/
+          requires:
+            - build
           # requires:
       #       - minikube
       #       - minikube_core_triggers
@@ -48,13 +55,6 @@ workflows:
       #       - minikube_kafka
       #       - minikube_nats
       #       - GKE
-          requires:
-            - build
-          filters:
-            branches:
-              ignore: /.*/
-	          tags:
-	            only: /^v.*/
 defaults: &defaults
   environment:
     # TODO: Restore bitnami/kubeless account
