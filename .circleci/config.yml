@@ -1,63 +1,8 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
-workflows:
-  version: 2
-  kubeless:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /.*/
-      - release:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /v.*/
-            branches:
-              ignore: /.*/
-      # - build_images:
-      #     requires:
-      #       - build
-      # - minikube:
-      #     requires:
-      #       - build
-      # - minikube_core_triggers:
-      #     requires:
-      #       - build
-      # - minikube_build_functions:
-      #     requires:
-      #       - build
-      # - minikube_kafka:
-      #     requires:
-      #       - build
-      # - minikube_nats:
-      #     requires:
-      #       - build
-      # - GKE
-      #     requires:
-      #       - build
-      # - push_latest_images:
-      #     filters:
-      #       branches:
-      #         only: master
-      #     requires:
-      #       - build_images
-      #       - minikube
-      #       - minikube_core_triggers
-      #       - minikube_build_functions
-      #       - minikube_kafka
-      #       - minikube_nats
-      #       - GKE
-          # requires:
-      #       - minikube
-      #       - minikube_core_triggers
-      #       - minikube_build_functions
-      #       - minikube_kafka
-      #       - minikube_nats
-      #       - GKE
+
+## Definitions
+build_allways: &build_allways
+  
 defaults: &defaults
   environment:
     # TODO: Restore bitnami/kubeless account
@@ -124,8 +69,67 @@ should_test: &should_test
     if [[ "$SHOULD_TEST" != "1" ]]; then
       circleci step halt
     fi
+#### End of definitions
 
-
+workflows:
+  version: 2
+  kubeless:
+    jobs:
+      - build:
+          <<: *build_allways
+      - build_images:
+          <<: *build_allways
+          requires:
+            - build
+      - minikube:
+          <<: *build_allways
+          requires:
+            - build
+      - minikube_core_triggers:
+          <<: *build_allways
+          requires:
+            - build
+      - minikube_build_functions:
+          <<: *build_allways
+          requires:
+            - build
+      - minikube_kafka:
+          <<: *build_allways
+          requires:
+            - build
+      - minikube_nats:
+          <<: *build_allways
+          requires:
+            - build
+      - GKE:
+          <<: *build_allways
+          requires:
+            - build
+      - push_latest_images:
+          filters:
+            branches:
+              only: master
+          requires:
+            - build_images
+            - minikube
+            - minikube_core_triggers
+            - minikube_build_functions
+            - minikube_kafka
+            - minikube_nats
+            - GKE
+      - release:
+          filters:
+            tags:
+              only: /v.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - minikube
+            - minikube_core_triggers
+            - minikube_build_functions
+            - minikube_kafka
+            - minikube_nats
+            - GKE
 jobs:
   build:
     <<: *defaults
@@ -137,8 +141,8 @@ jobs:
       - <<: *exports
       - run: make bootstrap
       - run: make VERSION=${CONTROLLER_TAG} binary
-      # - run: make test
-      # - run: make validation
+      - run: make test
+      - run: make validation
       - run: make all-yaml
       - run: "sed -i.bak 's/:latest/'\":${CONTROLLER_TAG}\"'/g' kubeless.yaml"
       - run: "sed -i.bak 's/:latest/'\":${CONTROLLER_TAG}\"'/g' kubeless-non-rbac.yaml"
@@ -255,7 +259,7 @@ jobs:
           at: /tmp/go
       - <<: *restore_workspace
       - run: ./script/install-gcloud-and-start.sh $(pwd) > /dev/null
-      - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH} | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
+      - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-ci-${CIRCLE_BRANCH} | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
       - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $ZONE $GKE_VERSION $GKE_ADMIN > /dev/null
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} deployment
       - run: ./script/integration-tests gke_${GKE_PROJECT}_${ZONE}_${ESCAPED_GKE_CLUSTER} basic
