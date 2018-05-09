@@ -92,7 +92,7 @@ function upload_asset {
   elif [[ "$filename" == *".yaml" ]]; then
     local content_type="text/yaml"
   fi
-  curl -H "Authorization: token $GITHUB_TOKEN" \
+  curl -H "Authorization: token $ACCESS_TOKEN" \
     -H "Content-Type: $content_type" \
     --data-binary @"$asset" \
     "https://uploads.github.com/repos/$repo_domain/$repo_name/releases/$release_id/assets?name=$filename"
