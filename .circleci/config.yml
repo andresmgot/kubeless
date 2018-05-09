@@ -10,6 +10,14 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - release:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
       # - build_images:
       #     requires:
       #       - build
@@ -43,14 +51,6 @@ workflows:
       #       - minikube_kafka
       #       - minikube_nats
       #       - GKE
-      - release:
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v.*/
-          requires:
-            - build
           # requires:
       #       - minikube
       #       - minikube_core_triggers
