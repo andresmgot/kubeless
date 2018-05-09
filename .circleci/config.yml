@@ -7,9 +7,9 @@ workflows:
   kubeless:
     jobs:
       - build
-      - build_images:
-          requires:
-            - build
+      # - build_images:
+      #     requires:
+      #       - build
       # - minikube:
       #     requires:
       #       - build
@@ -28,18 +28,33 @@ workflows:
       # - GKE
       #     requires:
       #       - build
-      - push_latest_images:
-          # filters:
-          #   branches:
-          #     only: master
+      # - push_latest_images:
+      #     filters:
+      #       branches:
+      #         only: master
+      #     requires:
+      #       - build_images
+      #       - minikube
+      #       - minikube_core_triggers
+      #       - minikube_build_functions
+      #       - minikube_kafka
+      #       - minikube_nats
+      #       - GKE
+      - release:
+          # requires:
+      #       - minikube
+      #       - minikube_core_triggers
+      #       - minikube_build_functions
+      #       - minikube_kafka
+      #       - minikube_nats
+      #       - GKE
           requires:
-            - build_images
-            # - minikube
-            # - minikube_core_triggers
-            # - minikube_build_functions
-            # - minikube_kafka
-            # - minikube_nats
-            # - GKE
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+	          tags:
+	            only: /^v.*/
 defaults: &defaults
   environment:
     # TODO: Restore bitnami/kubeless account
@@ -264,3 +279,12 @@ jobs:
             docker tag ${image}:${CONTROLLER_TAG} ${image}:latest
             docker push ${image}:latest
           done
+  release:
+    <<: *defaults
+    docker:
+      - image: circleci/golang:1.9 
+    steps:
+      - <<: *exports
+      - run: make VERSION=${CIRCLE_TAG} binary-cross
+      - run: for d in bundles/kubeless_*; do zip -r9 $d.zip $d/; done
+      - run: ./script/create_release.sh ${CIRCLE_TAG}
