@@ -286,6 +286,7 @@ jobs:
     <<: *defaults
     docker:
       - image: circleci/golang:1.9 
+    working_directory: /go/src/github.com/kubeless/kubeless
     steps:
       - <<: *exports
       - checkout
