@@ -261,5 +261,5 @@ jobs:
             echo "Pulling ${image}:${CONTROLLER_TAG}"
             docker pull ${image}:${CONTROLLER_TAG}
             docker tag ${image}:${CONTROLLER_TAG} ${image}:latest
-            docker push ${image}:lates
+            docker push ${image}:latest
           done
