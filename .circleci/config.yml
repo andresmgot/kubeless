@@ -6,7 +6,10 @@ workflows:
   version: 2
   kubeless:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /.*/
       # - build_images:
       #     requires:
       #       - build
