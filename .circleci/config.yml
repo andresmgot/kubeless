@@ -86,33 +86,32 @@ workflows:
       - minikube:
           <<: *build_allways
           requires:
-            - build
+            - build_images
       - minikube_core_triggers:
           <<: *build_allways
           requires:
-            - build
+            - build_images
       - minikube_build_functions:
           <<: *build_allways
           requires:
-            - build
+            - build_images
       - minikube_kafka:
           <<: *build_allways
           requires:
-            - build
+            - build_images
       - minikube_nats:
           <<: *build_allways
           requires:
-            - build
+            - build_images
       - GKE:
           <<: *build_allways
           requires:
-            - build
+            - build_images
       - push_latest_images:
           filters:
             branches:
               only: master
           requires:
-            - build_images
             - minikube
             - minikube_core_triggers
             - minikube_build_functions
