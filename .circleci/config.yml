@@ -2,7 +2,9 @@ version: 2
 
 ## Definitions
 build_allways: &build_allways
-  
+  filters:
+    tags:
+      only: /.*/
 defaults: &defaults
   environment:
     # TODO: Restore bitnami/kubeless account
