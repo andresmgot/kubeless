@@ -1,0 +1,16 @@
+FROM bitnami/minideb
+
+# Install ballerina
+RUN install_packages curl && \
+    curl -kLO https://product-dist.ballerina.io/downloads/0.970.0/ballerina-platform-linux-installer-x64-0.970.0.deb && \
+    dpkg -i ballerina-platform-linux-installer-x64-0.970.0.deb && \
+    rm ballerina-platform-linux-installer-x64-0.970.0.deb
+
+# Install controller
+ADD kubeless.tpl.bal /ballerina/files/
+
+# TODO: Remove
+ADD func /ballerina/files/func
+
+ENTRYPOINT [""]
+# USER 1000
