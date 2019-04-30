@@ -33,10 +33,6 @@ echo_info() {
 }
 export -f echo_info
 
-kubectl() {
-    ${KUBECTL_BIN:?} --context=${TEST_CONTEXT:?} "$@"
-}
-
 ## k8s specific Helper functions
 k8s_wait_for_pod_ready() {
     echo_info "Waiting for pod '${@}' to be ready ... "
